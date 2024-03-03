@@ -10,7 +10,7 @@ parser.add_argument("-i", "--json_file", required=True)
 parser.add_argument("-o", "--csv_file", required=True)
 args = parser.parse_args()
 
-with jsonlines.open(args.json_file) as reader, open(args.csv_file, 'w') as csvfile:
+with jsonlines.open(args.json_file) as reader, open(args.csv_file, 'w', encoding='utf8') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(["text", "summary", "type_ids", "row_ids", "col_ids"])
     for sample in tqdm(reader):

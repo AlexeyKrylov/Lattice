@@ -961,6 +961,8 @@ class T5Stack(T5PreTrainedModel):
         position_bias = None
         encoder_decoder_position_bias = None
 
+        # hidden_states = inputs_embeds
+
         hidden_states = self.dropout(inputs_embeds)
 
         for i, (layer_module, past_key_value) in enumerate(zip(self.block, past_key_values)):
@@ -1424,7 +1426,7 @@ class T5ForConditionalGeneration(T5PreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.model_dim = config.d_model
-
+        # config.dropout_rate = 0
         self.shared = nn.Embedding(config.vocab_size, config.d_model)
 
         encoder_config = copy.deepcopy(config)

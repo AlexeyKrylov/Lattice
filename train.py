@@ -22,6 +22,7 @@ import logging
 import os
 import re
 import sys
+import torch
 from dataclasses import dataclass, field
 from typing import Optional
 import numpy as np
@@ -45,6 +46,13 @@ from model.trainer_seq2seq import CustomSeq2SeqTrainer
 
 logger = logging.getLogger(__name__)
 
+def wandb_set():
+    ### custom your wandb setting here ###
+    os.environ["WANDB_DISABLED"] = "true"
+    # os.environ["WANDB_API_KEY"] = "11f51a2ea2a41b8b79f0ebc544208a24a8ff6cab"
+    # os.environ["WANDB_MODE"] = "offline"
+    # os.environ["PL_TORCH_DISTRIBUTED_BACKEND"] = "gloo"
+    # os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 @dataclass
 class ModelArguments:
@@ -272,6 +280,10 @@ def main():
         extension = data_args.test_file.split(".")[-1]
     datasets = load_dataset(extension, data_files=data_files)
 
+    # Metric
+    metric_name = "sacrebleu"
+    metric = load_metric(metric_name)
+
     # Load pretrained model and tokenizer
     # Distributed training:
     # The .from_pretrained methods guarantee that only one local process can concurrently download model & vocab.
@@ -388,6 +400,8 @@ def main():
             ]
 
         model_inputs["labels"] = labels["input_ids"]
+        # for kkey in model_inputs:
+        #     model_inputs[kkey] = torch.tensor(model_inputs[kkey], dtype=torch.long)
         # print(model_inputs)
         # exit()
         return model_inputs
@@ -448,9 +462,6 @@ def main():
             pad_to_multiple_of=8 if training_args.fp16 else None,
         )
 
-    # Metric
-    metric_name = "sacrebleu"
-    metric = load_metric(metric_name)
 
     def postprocess_text(preds, labels):
         preds = [pred.strip() for pred in preds]
@@ -555,7 +566,7 @@ def main():
                 )
                 test_preds = [pred.strip() for pred in test_preds]
                 output_test_preds_file = os.path.join(training_args.output_dir, "test_preds_seq2seq.txt")
-                with open(output_test_preds_file, "w") as writer:
+                with open(output_test_preds_file, "w", encoding='utf8') as writer:
                     writer.write("\n".join(test_preds))
 
     if trainer.is_world_process_zero():
@@ -565,4 +576,5 @@ def main():
 
 
 if __name__ == "__main__":
+    wandb_set()
     main()
